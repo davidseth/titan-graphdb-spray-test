@@ -6,7 +6,7 @@ import com.thinkaurelius.titan.graphdb.blueprints.TitanBlueprintsGraph
 import com.thinkaurelius.titan.core. { TitanGraph, TitanFactory, TitanType, TitanVertex }
 import com.tinkerpop.blueprints.Graph
 import com.tinkerpop.gremlin.scala.GremlinScalaPipeline
-import com.tinkerpop.gremlin.scala.ScalaGraph
+import com.tinkerpop.gremlin.scala. { ScalaGraph, ScalaEdge, ScalaVertex }
 import com.tinkerpop.gremlin.scala.ScalaGraph.unwrap
 import com.tinkerpop.gremlin.scala.ScalaPipeFunction
 import com.tinkerpop.gremlin.scala.ScalaVertex.wrap
@@ -51,44 +51,69 @@ trait MyService extends HttpService {
     conf
   }
 
-    def getTitanConnection : TitanGraph = {
+    def getTitanConnection : ScalaGraph = {
 
       if (g == null || !g.isOpen()) {
         g = TitanFactory.open(getTitanConf);
       }
+
+      //var graph: ScalaGraph = null
 
       g
     }
 
   //def g = TitanFactory.open(getTitanConf)
 
+  val myRoute2 = path("people" / IntNumber)  { vertexId =>
+    get {
+      complete {
+        var g = getTitanConnection
+        val id = vertexId;
+        println(id)
+
+        var vertex = g.getVertex(id);
+        //return vertex;
+
+        //var json = com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility.jsonFromElement(vertex, null, com.tinkerpop.blueprints.util.io.graphson.GraphSONMode.EXTENDED);
+
+        <html>
+          <body>
+            {vertex.getProperty("name")}
+          </body>
+        </html>
+      }
+    }
+  }
+
+
   val myRoute =
-    path("") {
+    path("graph") {
       get {
         respondWithMediaType(`text/html`) { // XML is marshalled to `text/xml` by default, so we simply override here
           complete {
 
 
-            var g: TitanGraph = getTitanConnection// TitanFactory.open(getTitanConf);
+            //var g: TitanGraph = getTitanConnection// TitanFactory.open(getTitanConf);
+            var g = getTitanConnection// TitanFactory.open(getTitanConf);
 
             //g.newTransaction()
 
-            var nameType: TitanType = g.getType("name");
-            if (nameType == null) {
-              g.makeKey("name");
-              g.makeKey("name").dataType(String).indexed(Vertex).make();
-              g.makeLabel("place").make();
-              g.makeLabel("married").make();
-
-            }
-            var cityType: TitanType = g.getType("city");
-            if (cityType == null) {
-              g.makeKey("city").dataType(String).indexed(Vertex).indexed(Edge).indexed("search",Vertex).indexed("search",Edge).make();
-            }
-            var locationType: TitanType = g.getType("location");
-            if (locationType == null) {
-              g.makeKey("location").dataType(Geoshape).indexed(Vertex).indexed(Edge).indexed("search",Vertex).indexed("search",Edge).make();
-            }
+//            var nameType: TitanType = g.getType("name");
+//            if (nameType == null) {
+//              g.makeKey("name");
+//              g.makeKey("name").dataType(String).indexed(Vertex).make();
+//              g.makeLabel("place").make();
+//              g.makeLabel("married").make();
+//
+//            }
+//            var cityType: TitanType = g.getType("city");
+//            if (cityType == null) {
+//              g.makeKey("city").dataType(String).indexed(Vertex).indexed(Edge).indexed("search",Vertex).indexed("search",Edge).make();
+//            }
+//            var locationType: TitanType = g.getType("location");
+//            if (locationType == null) {
+//              g.makeKey("location").dataType(Geoshape).indexed(Vertex).indexed(Edge).indexed("search",Vertex).indexed("search",Edge).make();
+//            }
 
 
             val juno = g.addVertex(null);
@@ -99,37 +124,70 @@ trait MyService extends HttpService {
 
             val jupiter = g.addVertex(null);
             jupiter.setProperty("name", "jupiter");
-            Edge friends = g.addEdge(null, juno, jupiter, "friends");
-            Edge family = g.addEdge(null, juno, jupiter, "family");
+            val friends = g.addEdge(null, juno, jupiter, "friends");
+            val family = g.addEdge(null, juno, jupiter, "family");
 
+            g.shutdown()
 
-            g.commit()
+            //g.graph.c
+            //g.commit()
 
             //println(juno.getProperty("name"));
 
 
             <html>
               <body>
-                <h1>Say hello to <i>spray-routing</i> on <i>spray-can</i>! {juno.getProperty("name")}</h1>
+                <h1>Say hello to <i>spray-routing</i> on <i>spray-can</i>! {juno.getId()}</h1>
               </body>
             </html>
           }
         }
       }
-    }
-  path("/vertex") {
-    respondWithMediaType(`application/json`) {
-      complete {
-        var g: TitanGraph = getTitanConnection
-        val id: Long = 2;
+    } ~
+    path("people" / IntNumber)  { vertexId =>
+      get {
+        complete {
+          var g = getTitanConnection
+          val id = vertexId;
+          println(id)
 
-        var vertex: TitanVertex = g.getVertex(id);
-        //return vertex;
+          var vertex = g.getVertex(id);
+          //return vertex;
 
-        var json: JSONObject = com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility.jsonFromElement(vertex, null, GraphSONMode.EXTENDED);
-        System.out.println(json.toString());
-        return json.toString();
+          //var json = com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility.jsonFromElement(vertex, null, com.tinkerpop.blueprints.util.io.graphson.GraphSONMode.EXTENDED);
+
+          <html>
+            <body>
+              {vertex.getProperty("name")}
+            </body>
+          </html>
+        }
+      }
+    } ~
+    path("/vertex" / spray.routing.PathMatchers.LongNumber) { vertexId =>
+      respondWithMediaType(`text/html`) {
+        complete {
+          var g = getTitanConnection
+          val id = vertexId;
+          println(id)
+
+          var vertex = g.getVertex(id);
+          //return vertex;
+
+          //var json = com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility.jsonFromElement(vertex, null, com.tinkerpop.blueprints.util.io.graphson.GraphSONMode.EXTENDED);
+
+          <html>
+          <body>
+            {vertex.getProperty("name")}
+          </body>
+          </html>
+
+
+          //println(vertex.getProperty("name"))
+
+          //json
+        }
       }
     }
-  }
+
 }
