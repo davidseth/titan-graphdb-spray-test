@@ -3,13 +3,10 @@ package com.example
 
 import akka.actor.Actor
 import com.thinkaurelius.titan.graphdb.blueprints.TitanBlueprintsGraph
-import com.thinkaurelius.titan.core. { TitanGraph, TitanFactory, TitanType, TitanVertex }
-import com.tinkerpop.blueprints.Graph
-import com.tinkerpop.gremlin.scala.GremlinScalaPipeline
-import com.tinkerpop.gremlin.scala. { ScalaGraph, ScalaEdge, ScalaVertex }
-import com.tinkerpop.gremlin.scala.ScalaGraph.unwrap
-import com.tinkerpop.gremlin.scala.ScalaPipeFunction
-import com.tinkerpop.gremlin.scala.ScalaVertex.wrap
+import com.thinkaurelius.titan.core. { TitanGraph, TitanFactory, TitanType }
+import com.tinkerpop.blueprints. {Vertex, Edge }
+import com.thinkaurelius.titan.core.attribute.Geoshape
+import com.tinkerpop.gremlin.scala._
 import org.apache.commons.configuration.BaseConfiguration
 import spray.http.MediaTypes._
 import spray.http._
@@ -51,14 +48,10 @@ trait MyService extends HttpService {
     conf
   }
 
-    def getTitanConnection : ScalaGraph = {
-
+    def getTitanConnection = {
       if (g == null || !g.isOpen()) {
         g = TitanFactory.open(getTitanConf);
       }
-
-      //var graph: ScalaGraph = null
-
       g
     }
 
@@ -98,22 +91,21 @@ trait MyService extends HttpService {
 
             //g.newTransaction()
 
-//            var nameType: TitanType = g.getType("name");
-//            if (nameType == null) {
-//              g.makeKey("name");
-//              g.makeKey("name").dataType(String).indexed(Vertex).make();
-//              g.makeLabel("place").make();
-//              g.makeLabel("married").make();
-//
-//            }
-//            var cityType: TitanType = g.getType("city");
-//            if (cityType == null) {
-//              g.makeKey("city").dataType(String).indexed(Vertex).indexed(Edge).indexed("search",Vertex).indexed("search",Edge).make();
-//            }
-//            var locationType: TitanType = g.getType("location");
-//            if (locationType == null) {
-//              g.makeKey("location").dataType(Geoshape).indexed(Vertex).indexed(Edge).indexed("search",Vertex).indexed("search",Edge).make();
-//            }
+            var nameType = g.getType("name");
+            if (nameType == null) {
+              g.makeKey("name").dataType(classOf[String]).indexed(classOf[Vertex]).make();
+              g.makeLabel("place").make();
+              g.makeLabel("married").make();
+
+            }
+            var cityType: TitanType = g.getType("city");
+            if (cityType == null) {
+              g.makeKey("city").dataType(classOf[String]).indexed(classOf[Vertex]).indexed(classOf[Edge]).indexed("search",classOf[Vertex]).indexed("search",classOf[Edge]).make();
+            }
+            var locationType: TitanType = g.getType("location");
+            if (locationType == null) {
+              g.makeKey("location").dataType(classOf[Geoshape]).indexed(classOf[Vertex]).indexed(classOf[Edge]).indexed("search",classOf[Vertex]).indexed("search",classOf[Edge]).make();
+            }
 
 
             val juno = g.addVertex(null);
@@ -127,10 +119,8 @@ trait MyService extends HttpService {
             val friends = g.addEdge(null, juno, jupiter, "friends");
             val family = g.addEdge(null, juno, jupiter, "family");
 
-            g.shutdown()
 
-            //g.graph.c
-            //g.commit()
+            g.commit()
 
             //println(juno.getProperty("name"));
 
@@ -154,8 +144,9 @@ trait MyService extends HttpService {
           var vertex = g.getVertex(id);
           //return vertex;
 
-          //var json = com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility.jsonFromElement(vertex, null, com.tinkerpop.blueprints.util.io.graphson.GraphSONMode.EXTENDED);
+          var json = com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility.jsonFromElement(vertex, null, com.tinkerpop.blueprints.util.io.graphson.GraphSONMode.EXTENDED);
 
+          {json}
           <html>
             <body>
               {vertex.getProperty("name")}
@@ -164,7 +155,7 @@ trait MyService extends HttpService {
         }
       }
     } ~
-    path("/vertex" / spray.routing.PathMatchers.LongNumber) { vertexId =>
+    path("/vertex" / IntNumber) { vertexId =>
       respondWithMediaType(`text/html`) {
         complete {
           var g = getTitanConnection
@@ -175,7 +166,6 @@ trait MyService extends HttpService {
           //return vertex;
 
           //var json = com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility.jsonFromElement(vertex, null, com.tinkerpop.blueprints.util.io.graphson.GraphSONMode.EXTENDED);
-
           <html>
           <body>
             {vertex.getProperty("name")}
