@@ -11,6 +11,7 @@ import org.apache.commons.configuration.BaseConfiguration
 import spray.http.MediaTypes._
 import spray.http._
 import spray.routing._
+import argonaut._, Argonaut._
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
@@ -64,10 +65,12 @@ trait MyService extends HttpService {
         val id = vertexId;
         println(id)
 
+
         var vertex = g.getVertex(id);
         //return vertex;
 
         //var json = com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility.jsonFromElement(vertex, null, com.tinkerpop.blueprints.util.io.graphson.GraphSONMode.EXTENDED);
+
 
         <html>
           <body>
@@ -146,12 +149,9 @@ trait MyService extends HttpService {
 
           var json = com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility.jsonFromElement(vertex, null, com.tinkerpop.blueprints.util.io.graphson.GraphSONMode.EXTENDED);
 
-          {json}
-          <html>
-            <body>
-              {vertex.getProperty("name")}
-            </body>
-          </html>
+          val result = com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility.jsonFromElement(vertex, null, com.tinkerpop.blueprints.util.io.graphson.GraphSONMode.NORMAL);
+
+          result.toString()
         }
       }
     } ~
